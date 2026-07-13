@@ -7,9 +7,10 @@ import { readDocument } from "./input.js"
 import { Invocation } from "./invocation.js"
 import { renderResult } from "./output.js"
 import { publishGist } from "./providers/gist.js"
+import { publishHackMd } from "./providers/hackmd.js"
 import { publishPaste } from "./providers/paste-rs.js"
 
-export type ProviderName = "gist" | "paste.rs"
+export type ProviderName = "gist" | "hackmd" | "paste.rs"
 
 export interface PublishOptions {
   readonly file: Option.Option<string>
@@ -35,7 +36,9 @@ export const publish = Effect.fn("publish")(
 
     const url = provider === "paste.rs"
       ? yield* publishPaste(document)
-      : yield* publishGist(document, yield* resolveToken("gist", config))
+      : provider === "gist"
+        ? yield* publishGist(document, yield* resolveToken("gist", config))
+        : yield* publishHackMd(document, yield* resolveToken("hackmd", config))
     const shouldCopy = options.copy || (!options.noCopy && (config.copy || invocation.stderrIsTTY))
     const copied = shouldCopy ? yield* copyToClipboard(url) : false
     const result = { title: document.title, provider, url, copied }

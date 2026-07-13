@@ -4,38 +4,60 @@ import { Console, Effect, Redacted } from "effect"
 import { loadConfig, saveConfig } from "./config.js"
 import { Invocation } from "./invocation.js"
 
+const promptForToken = Effect.fn("promptForToken")(function* (
+  label: string,
+  envName: string,
+  savedToken: string,
+  environmentToken: string | undefined
+) {
+  if ((environmentToken?.trim().length ?? 0) > 0) {
+    yield* Console.log(`${envName} is already set; no ${label} token will be saved.`)
+    return savedToken
+  }
+
+  const hasSavedToken = savedToken.trim().length > 0
+  const replace = !hasSavedToken || (yield* Prompt.confirm({
+    message: `Replace the saved ${label} token?`,
+    initial: false
+  }))
+  if (!replace) return savedToken
+
+  const entered = yield* Prompt.password({
+    message: hasSavedToken
+      ? `${label} token (leave blank to keep current)`
+      : `${label} token (leave blank to skip)`
+  })
+  const value = Redacted.value(entered).trim()
+  return value.length > 0 || !hasSavedToken ? value : savedToken
+})
+
 export const initialize = Effect.fn("initialize")(function* () {
   const invocation = yield* Invocation
   const config = yield* loadConfig
 
   yield* Console.log("linkmd can save API tokens as plain text in its user config.")
 
-  let gistToken = config.providers.gist.token
-  const envName = config.providers.gist.token_env
-  if ((invocation.env[envName]?.trim().length ?? 0) > 0) {
-    yield* Console.log(`${envName} is already set; no GitHub token will be saved.`)
-  } else {
-    const hasSavedToken = gistToken.trim().length > 0
-    const replace = !hasSavedToken || (yield* Prompt.confirm({
-      message: "Replace the saved GitHub token?",
-      initial: false
-    }))
-    if (replace) {
-      const entered = yield* Prompt.password({
-        message: hasSavedToken
-          ? "GitHub token with gist scope (leave blank to keep current)"
-          : "GitHub token with gist scope (leave blank to skip)"
-      })
-      const value = Redacted.value(entered).trim()
-      if (value.length > 0 || !hasSavedToken) gistToken = value
-    }
-  }
+  const gist = config.providers.gist
+  const hackmd = config.providers.hackmd
+  const gistToken = yield* promptForToken(
+    "GitHub token with gist scope",
+    gist.token_env,
+    gist.token,
+    invocation.env[gist.token_env]
+  )
+  const hackmdToken = yield* promptForToken(
+    "HackMD API",
+    hackmd.token_env,
+    hackmd.token,
+    invocation.env[hackmd.token_env]
+  )
 
   const next = {
     ...config,
     providers: {
       ...config.providers,
-      gist: { ...config.providers.gist, token: gistToken }
+      gist: { ...gist, token: gistToken },
+      hackmd: { ...hackmd, token: hackmdToken }
     }
   }
   const confirmed = yield* Prompt.confirm({

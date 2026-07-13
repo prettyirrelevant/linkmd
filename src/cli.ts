@@ -28,7 +28,7 @@ const json = Options.boolean("json").pipe(
 )
 
 const makePublishCommand = (
-  name: "gist" | "paste",
+  name: "gist" | "hackmd" | "paste",
   provider: ProviderName,
   description: string
 ) => Command.make(
@@ -39,13 +39,14 @@ const makePublishCommand = (
 
 const paste = makePublishCommand("paste", "paste.rs", "Publish Markdown to paste.rs")
 const gist = makePublishCommand("gist", "gist", "Publish Markdown as a secret GitHub Gist")
+const hackmd = makePublishCommand("hackmd", "hackmd", "Publish Markdown as a guest-readable HackMD note")
 const init = Command.make("init", {}, () => initialize()).pipe(
   Command.withDescription("Configure provider credentials")
 )
 
 export const root = Command.make("linkmd", {}, () =>
-  Console.log("Usage: linkmd <gist|paste> [options] [file]\n       linkmd init")
+  Console.log("Usage: linkmd <gist|hackmd|paste> [options] [file]\n       linkmd init")
 ).pipe(
   Command.withDescription("Publish Markdown and print a shareable URL"),
-  Command.withSubcommands([gist, paste, init])
+  Command.withSubcommands([gist, hackmd, paste, init])
 )

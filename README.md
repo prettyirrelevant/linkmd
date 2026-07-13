@@ -5,6 +5,7 @@ Publish Markdown and print a shareable URL.
 ## Usage
 
 ```bash
+linkmd hackmd notes.md
 linkmd gist notes.md
 linkmd paste notes.md
 pbpaste | linkmd paste --no-copy
@@ -19,6 +20,8 @@ paste.rs is anonymous and URL-accessible. It does not document privacy or retent
 GitHub Gists are created with `public: false`. GitHub calls these secret gists: they are unlisted, but anyone with the URL can view them.
 
 Set `GITHUB_TOKEN` to a classic token with `gist` scope, or run `linkmd init` to store it in plain text under `${XDG_CONFIG_HOME:-$HOME/.config}/linkmd/config.toml`.
+
+HackMD notes are tagged `linkmd` and created with `readPermission: "guest"` and `writePermission: "owner"`. Set `HACKMD_TOKEN`, or save one with `linkmd init`.
 
 ## Development
 
