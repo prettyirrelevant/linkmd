@@ -2,6 +2,14 @@
 
 Publish Markdown and print a shareable URL.
 
+## Installation
+
+```bash
+mise use -g github:prettyirrelevant/linkmd
+```
+
+Or download the archive for your platform from [GitHub Releases](https://github.com/prettyirrelevant/linkmd/releases), extract `linkmd`, and place it on your `PATH`.
+
 ## Usage
 
 ```bash
