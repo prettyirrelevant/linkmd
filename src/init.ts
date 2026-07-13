@@ -11,7 +11,7 @@ const promptForToken = Effect.fn("promptForToken")(function* (
   environmentToken: string | undefined
 ) {
   if ((environmentToken?.trim().length ?? 0) > 0) {
-    yield* Console.log(`${envName} is already set; no ${label} token will be saved.`)
+    yield* Console.log(`${envName} is already set; the saved ${label} credential will be left unchanged.`)
     return savedToken
   }
 
@@ -40,13 +40,13 @@ export const initialize = Effect.fn("initialize")(function* () {
   const gist = config.providers.gist
   const hackmd = config.providers.hackmd
   const gistToken = yield* promptForToken(
-    "GitHub token with gist scope",
+    "GitHub",
     gist.token_env,
     gist.token,
     invocation.env[gist.token_env]
   )
   const hackmdToken = yield* promptForToken(
-    "HackMD API",
+    "HackMD",
     hackmd.token_env,
     hackmd.token,
     invocation.env[hackmd.token_env]

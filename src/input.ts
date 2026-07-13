@@ -49,7 +49,7 @@ export const readDocument = (
     }
 
     const raw = source === undefined || source === "-"
-      ? invocation.stdinIsTTY
+      ? source === undefined && invocation.stdinIsTTY
         ? yield* new UsageError({ message: "Markdown input required. Pass a file or pipe content to stdin." })
         : yield* invocation.readStdin
       : yield* Effect.gen(function* () {

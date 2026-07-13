@@ -37,3 +37,15 @@ it.effect("rejects dash-prefixed option typos as usage errors", () =>
     Effect.flip,
     Effect.map((error) => expect(error._tag).toBe("UsageError"))
   ))
+
+it.effect("reads explicit stdin even when stdin is a TTY", () => {
+  const interactive = Invocation.make({
+    ...invocation,
+    readStdin: Effect.succeed("# Explicit stdin\n")
+  })
+  return readDocument({ file: Option.some("-"), title: Option.none() }).pipe(
+    Effect.provide(BunContext.layer),
+    Effect.provideService(Invocation, interactive),
+    Effect.map((document) => expect(document.title).toBe("Explicit stdin"))
+  )
+})

@@ -1,6 +1,8 @@
+import type { ProviderName } from "./provider.js"
+
 export interface PublishResult {
   readonly title: string
-  readonly provider: "gist" | "hackmd" | "paste.rs"
+  readonly provider: ProviderName
   readonly url: string
   readonly copied: boolean
 }

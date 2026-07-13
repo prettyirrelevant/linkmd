@@ -5,6 +5,7 @@ import { Effect, Exit, Redacted } from "effect"
 
 import { decodeConfig, defaultConfig, resolveToken, saveConfig } from "../src/config.js"
 import { Invocation } from "../src/invocation.js"
+import { ProviderName } from "../src/provider.js"
 
 const invocationWith = (env: Readonly<Record<string, string | undefined>>) => ({
   stdinIsTTY: false,
@@ -32,7 +33,7 @@ it.effect("rejects unknown config fields", () =>
   ))
 
 it.effect("prefers an environment token to a saved token", () =>
-  resolveToken("gist", {
+  resolveToken(ProviderName.Gist, {
     ...defaultConfig,
     providers: {
       ...defaultConfig.providers,

@@ -3,7 +3,8 @@ import { Console, Effect } from "effect"
 
 import { UsageError } from "./errors.js"
 import { initialize } from "./init.js"
-import { type ProviderName, publish } from "./publish.js"
+import { ProviderName } from "./provider.js"
+import { publish } from "./publish.js"
 
 const file = Args.text({ name: "file" }).pipe(
   Args.optional,
@@ -38,9 +39,13 @@ const makePublishCommand = (
   (options) => publish(provider, options)
 ).pipe(Command.withDescription(description))
 
-const paste = makePublishCommand("paste", "paste.rs", "Publish Markdown to paste.rs")
-const gist = makePublishCommand("gist", "gist", "Publish Markdown as a secret GitHub Gist")
-const hackmd = makePublishCommand("hackmd", "hackmd", "Publish Markdown as a guest-readable HackMD note")
+const paste = makePublishCommand("paste", ProviderName.PasteRs, "Publish Markdown to paste.rs")
+const gist = makePublishCommand("gist", ProviderName.Gist, "Publish Markdown as a secret GitHub Gist")
+const hackmd = makePublishCommand(
+  "hackmd",
+  ProviderName.HackMD,
+  "Publish Markdown as a guest-readable HackMD note"
+)
 const init = Command.make("init", {}, () => initialize()).pipe(
   Command.withDescription("Configure provider credentials")
 )

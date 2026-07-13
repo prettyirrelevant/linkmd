@@ -6,11 +6,10 @@ import { UsageError } from "./errors.js"
 import { readDocument } from "./input.js"
 import { Invocation } from "./invocation.js"
 import { renderResult, sanitizeForTerminal } from "./output.js"
+import { ProviderName, providerLabel } from "./provider.js"
 import { publishGist } from "./providers/gist.js"
 import { publishHackMd } from "./providers/hackmd.js"
 import { publishPaste } from "./providers/paste-rs.js"
-
-export type ProviderName = "gist" | "hackmd" | "paste.rs"
 
 export interface PublishOptions {
   readonly file: Option.Option<string>
@@ -27,7 +26,7 @@ export const publish = Effect.fn("publish")(
     }
 
     const invocation = yield* Invocation
-    const needsConfig = provider !== "paste.rs" || (
+    const needsConfig = provider !== ProviderName.PasteRs || (
       !options.noCopy && !options.json && invocation.stderrIsTTY
     )
     const config = needsConfig ? yield* loadConfig : undefined
@@ -38,13 +37,13 @@ export const publish = Effect.fn("publish")(
     })
 
     let url: string
-    if (provider === "paste.rs") {
+    if (provider === ProviderName.PasteRs) {
       url = yield* publishPaste(document)
     } else {
       const authConfig = config ?? (yield* loadConfig)
-      url = provider === "gist"
-        ? yield* publishGist(document, yield* resolveToken("gist", authConfig))
-        : yield* publishHackMd(document, yield* resolveToken("hackmd", authConfig))
+      url = provider === ProviderName.Gist
+        ? yield* publishGist(document, yield* resolveToken(ProviderName.Gist, authConfig))
+        : yield* publishHackMd(document, yield* resolveToken(ProviderName.HackMD, authConfig))
     }
     const shouldCopy = options.copy || (
       !options.noCopy && !options.json && invocation.stderrIsTTY && (config?.copy ?? true)
@@ -56,11 +55,12 @@ export const publish = Effect.fn("publish")(
       yield* Console.log(renderResult({ title: document.title, provider, url, copied }, true))
     } else if (invocation.stderrIsTTY) {
       const title = sanitizeForTerminal(document.title)
+      const label = providerLabel(provider)
       yield* copied
-        ? Console.error(`Published "${title}" to ${provider}; copied link.`)
+        ? Console.error(`Published "${title}" to ${label}; copied link.`)
         : shouldCopy
-          ? Console.error(`Published "${title}" to ${provider}; could not copy link.`)
-          : Console.error(`Published "${title}" to ${provider}.`)
+          ? Console.error(`Published "${title}" to ${label}; could not copy link.`)
+          : Console.error(`Published "${title}" to ${label}.`)
     }
   }
 )

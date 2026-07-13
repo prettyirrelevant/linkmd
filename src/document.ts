@@ -49,7 +49,7 @@ export const findFirstHeading = (content: string): Option.Option<string> => {
 }
 
 export const normalizeContent = (content: string): string =>
-  `${content.replace(/\r\n?/g, "\n").trimEnd()}\n`
+  `${content.replace(/\r\n?/g, "\n").replace(/\n+$/, "")}\n`
 
 export const slugify = (value: string): string => {
   const slug = value

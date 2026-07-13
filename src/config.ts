@@ -4,6 +4,7 @@ import { parse, stringify } from "smol-toml"
 
 import { AuthError, ConfigError } from "./errors.js"
 import { Invocation } from "./invocation.js"
+import { ProviderName, providerLabel } from "./provider.js"
 
 const TokenConfig = Schema.Struct({
   token_env: Schema.String,
@@ -20,7 +21,7 @@ export const AppConfigSchema = Schema.Struct({
 })
 
 export type AppConfig = typeof AppConfigSchema.Type
-export type AuthenticatedProvider = "hackmd" | "gist"
+export type AuthenticatedProvider = ProviderName.Gist | ProviderName.HackMD
 
 export const defaultConfig: AppConfig = {
   version: 1,
@@ -106,9 +107,8 @@ export const resolveToken = (
     : savedToken
 
   if (token.length === 0) {
-    const label = provider === "gist" ? "GitHub Gist" : "HackMD"
     return yield* new AuthError({
-      message: `${label} needs an API token. Run linkmd init or set ${providerConfig.token_env}.`
+      message: `${providerLabel(provider)} needs an API token. Run linkmd init or set ${providerConfig.token_env}.`
     })
   }
 
