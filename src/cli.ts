@@ -1,7 +1,8 @@
 import { Args, Command, Options } from "@effect/cli"
 import { Console } from "effect"
 
-import { publish } from "./publish.js"
+import { initialize } from "./init.js"
+import { type ProviderName, publish } from "./publish.js"
 
 const file = Args.text({ name: "file" }).pipe(
   Args.optional,
@@ -26,15 +27,25 @@ const json = Options.boolean("json").pipe(
   Options.withDescription("Print one JSON object")
 )
 
-const paste = Command.make(
-  "paste",
+const makePublishCommand = (
+  name: "gist" | "paste",
+  provider: ProviderName,
+  description: string
+) => Command.make(
+  name,
   { file, title, copy, noCopy, json },
-  (options) => publish(options)
-).pipe(Command.withDescription("Publish Markdown to paste.rs"))
+  (options) => publish(provider, options)
+).pipe(Command.withDescription(description))
+
+const paste = makePublishCommand("paste", "paste.rs", "Publish Markdown to paste.rs")
+const gist = makePublishCommand("gist", "gist", "Publish Markdown as a secret GitHub Gist")
+const init = Command.make("init", {}, () => initialize()).pipe(
+  Command.withDescription("Configure provider credentials")
+)
 
 export const root = Command.make("linkmd", {}, () =>
-  Console.log("Usage: linkmd paste [options] [file]\n\nRun linkmd paste --help for provider options.")
+  Console.log("Usage: linkmd <gist|paste> [options] [file]\n       linkmd init")
 ).pipe(
   Command.withDescription("Publish Markdown and print a shareable URL"),
-  Command.withSubcommands([paste])
+  Command.withSubcommands([gist, paste, init])
 )

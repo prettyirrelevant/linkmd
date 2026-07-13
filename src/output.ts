@@ -1,6 +1,6 @@
 export interface PublishResult {
   readonly title: string
-  readonly provider: "paste.rs"
+  readonly provider: "gist" | "paste.rs"
   readonly url: string
   readonly copied: boolean
 }

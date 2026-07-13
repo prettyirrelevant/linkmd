@@ -9,6 +9,15 @@ export class InputError extends Data.TaggedError("InputError")<{
   readonly cause?: unknown
 }> {}
 
+export class ConfigError extends Data.TaggedError("ConfigError")<{
+  readonly message: string
+  readonly cause?: unknown
+}> {}
+
+export class AuthError extends Data.TaggedError("AuthError")<{
+  readonly message: string
+}> {}
+
 export class PublishError extends Data.TaggedError("PublishError")<{
   readonly message: string
   readonly outcomeUnknown: boolean
@@ -16,7 +25,7 @@ export class PublishError extends Data.TaggedError("PublishError")<{
   readonly cause?: unknown
 }> {}
 
-export type AppError = UsageError | InputError | PublishError
+export type AppError = UsageError | InputError | ConfigError | AuthError | PublishError
 
 export class ExitCodeError extends Data.TaggedError("ExitCodeError")<{
   readonly code: number
@@ -28,6 +37,9 @@ export const exitCodeFor = (error: AppError): number => {
       return 2
     case "InputError":
       return 3
+    case "ConfigError":
+    case "AuthError":
+      return 4
     case "PublishError":
       return error.status === undefined ? 6 : 5
   }

@@ -1,5 +1,5 @@
 import { Command, ValidationError } from "@effect/cli"
-import { FetchHttpClient } from "@effect/platform"
+import { FetchHttpClient, Terminal } from "@effect/platform"
 import type { Runtime } from "@effect/platform"
 import { BunContext, BunRuntime } from "@effect/platform-bun"
 import { Cause, Console, Effect, Exit, Layer, Option } from "effect"
@@ -26,8 +26,14 @@ const program = command.pipe(
   Effect.catchTags({
     UsageError: (error) => renderError(error),
     InputError: (error) => renderError(error),
+    ConfigError: (error) => renderError(error),
+    AuthError: (error) => renderError(error),
     PublishError: (error) => renderError(error)
   }),
+  Effect.catchIf(
+    (error) => Terminal.isQuitException(error),
+    () => new ExitCodeError({ code: 130 })
+  ),
   Effect.catchIf(
     (error) => ValidationError.isValidationError(error),
     () => new ExitCodeError({ code: 2 })
