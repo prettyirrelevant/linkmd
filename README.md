@@ -2,7 +2,17 @@
 
 Publish Markdown and print a shareable URL.
 
-The CLI is under active development.
+## Usage
+
+```bash
+linkmd paste notes.md
+pbpaste | linkmd paste --no-copy
+linkmd paste --json notes.md
+```
+
+Provider options precede the optional file argument. Run `linkmd paste --help` for details.
+
+paste.rs is anonymous and URL-accessible. It does not document privacy or retention guarantees; do not publish secrets.
 
 ## Development
 
