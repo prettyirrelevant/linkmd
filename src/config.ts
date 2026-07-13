@@ -31,7 +31,10 @@ export const defaultConfig: AppConfig = {
   }
 }
 
-export const decodeConfig = (input: unknown) => Schema.decodeUnknown(AppConfigSchema)(input).pipe(
+export const decodeConfig = (input: unknown) => Schema.decodeUnknown(AppConfigSchema, {
+  errors: "all",
+  onExcessProperty: "error"
+})(input).pipe(
   Effect.mapError((cause) => new ConfigError({
     message: "The linkmd config file is invalid or uses an unsupported version.",
     cause

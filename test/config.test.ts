@@ -25,6 +25,12 @@ it.effect("rejects unsupported config versions", () =>
     Effect.map((exit) => expect(Exit.isFailure(exit)).toBe(true))
   ))
 
+it.effect("rejects unknown config fields", () =>
+  decodeConfig({ ...defaultConfig, unexpected: true }).pipe(
+    Effect.exit,
+    Effect.map((exit) => expect(Exit.isFailure(exit)).toBe(true))
+  ))
+
 it.effect("prefers an environment token to a saved token", () =>
   resolveToken("gist", {
     ...defaultConfig,

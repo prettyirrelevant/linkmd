@@ -52,4 +52,14 @@ describe("GitHub Gist provider", () => {
       Effect.exit,
       Effect.map((exit) => expect(Exit.isFailure(exit)).toBe(true))
     ))
+
+  it.effect("marks a 503 outcome as unknown", () =>
+    publishGist(document, token).pipe(
+      Effect.provideService(HttpClient.HttpClient, clientReturning(503, { message: "unavailable" })),
+      Effect.flip,
+      Effect.map((error) => {
+        expect(error.status).toBe(503)
+        expect(error.outcomeUnknown).toBe(true)
+      })
+    ))
 })

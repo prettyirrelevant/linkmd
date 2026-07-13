@@ -44,4 +44,14 @@ describe("paste.rs provider", () => {
         }
       })
     ))
+
+  it.effect("marks a 503 outcome as unknown", () =>
+    publishPaste(document).pipe(
+      Effect.provideService(HttpClient.HttpClient, clientReturning(503, "unavailable")),
+      Effect.flip,
+      Effect.map((error) => {
+        expect(error.status).toBe(503)
+        expect(error.outcomeUnknown).toBe(true)
+      })
+    ))
 })

@@ -1,6 +1,7 @@
 import { Option } from "effect"
 
-export const MAX_DOCUMENT_BYTES = 1024 * 1024
+export const MAX_DOCUMENT_MEBIBYTES = 10
+export const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_MEBIBYTES * 1024 * 1024
 
 export interface Document {
   readonly content: string

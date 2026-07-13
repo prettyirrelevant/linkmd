@@ -41,6 +41,8 @@ export const exitCodeFor = (error: AppError): number => {
     case "AuthError":
       return 4
     case "PublishError":
-      return error.status === undefined ? 6 : 5
+      return error.status === undefined || error.outcomeUnknown ? 6 : 5
   }
 }
+
+export const isAmbiguousStatus = (status: number): boolean => status === 408 || status >= 500

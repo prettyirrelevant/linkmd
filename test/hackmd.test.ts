@@ -62,7 +62,20 @@ describe("HackMD provider", () => {
   it.effect("does not accept 207 as success", () =>
     publishHackMd(document, token).pipe(
       Effect.provideService(HttpClient.HttpClient, clientReturning(207, {})),
-      Effect.exit,
-      Effect.map((exit) => expect(Exit.isFailure(exit)).toBe(true))
+      Effect.flip,
+      Effect.map((error) => {
+        expect(error.status).toBe(207)
+        expect(error.outcomeUnknown).toBe(true)
+      })
+    ))
+
+  it.effect("marks a 503 outcome as unknown", () =>
+    publishHackMd(document, token).pipe(
+      Effect.provideService(HttpClient.HttpClient, clientReturning(503, {})),
+      Effect.flip,
+      Effect.map((error) => {
+        expect(error.status).toBe(503)
+        expect(error.outcomeUnknown).toBe(true)
+      })
     ))
 })

@@ -2,7 +2,7 @@ import { HttpClient, HttpClientRequest, HttpClientResponse } from "@effect/platf
 import { Effect, Redacted, Schema } from "effect"
 
 import type { Document } from "../document.js"
-import { PublishError } from "../errors.js"
+import { isAmbiguousStatus, PublishError } from "../errors.js"
 
 const HackMdResponse = Schema.Struct({
   id: Schema.String,
@@ -32,7 +32,7 @@ const publishHackMdEffect = Effect.fn("publishHackMd")(function* (
   document: Document,
   token: Redacted.Redacted<string>
 ) {
-  const client = yield* HttpClient.HttpClient
+  const client = (yield* HttpClient.HttpClient).pipe(HttpClient.withScope)
   const request = HttpClientRequest.post("https://api.hackmd.io/v1/notes").pipe(
     HttpClientRequest.acceptJson,
     HttpClientRequest.bearerToken(token),
@@ -53,11 +53,14 @@ const publishHackMdEffect = Effect.fn("publishHackMd")(function* (
   )
 
   if (response.status !== 201) {
+    const outcomeUnknown = response.status === 207 || isAmbiguousStatus(response.status)
     return yield* new PublishError({
       message: response.status === 207
         ? "HackMD returned a partial-success response; no link was accepted."
-        : `HackMD rejected the note with HTTP ${response.status}.`,
-      outcomeUnknown: response.status === 207,
+        : outcomeUnknown
+          ? `HackMD returned HTTP ${response.status} after submission; the outcome is unknown. Do not retry blindly.`
+          : `HackMD rejected the note with HTTP ${response.status}.`,
+      outcomeUnknown,
       status: response.status
     })
   }
@@ -74,6 +77,7 @@ const publishHackMdEffect = Effect.fn("publishHackMd")(function* (
 
 export const publishHackMd = (document: Document, token: Redacted.Redacted<string>) =>
   publishHackMdEffect(document, token).pipe(
+    Effect.scoped,
     Effect.timeoutFail({
       duration: "15 seconds",
       onTimeout: () => new PublishError({

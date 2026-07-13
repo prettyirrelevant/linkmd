@@ -1,6 +1,7 @@
 import { Args, Command, Options } from "@effect/cli"
-import { Console } from "effect"
+import { Console, Effect } from "effect"
 
+import { UsageError } from "./errors.js"
 import { initialize } from "./init.js"
 import { type ProviderName, publish } from "./publish.js"
 

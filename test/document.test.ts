@@ -2,7 +2,7 @@ import { describe, expect, it } from "@effect/vitest"
 import { Option } from "effect"
 
 import { findFirstHeading, normalizeContent, normalizeTitle, slugify } from "../src/document.js"
-import { renderResult } from "../src/output.js"
+import { renderResult, sanitizeForTerminal } from "../src/output.js"
 
 describe("Markdown domain", () => {
   it("finds the first H1 outside frontmatter and fences", () => {
@@ -38,5 +38,9 @@ title: ignored
       url: "https://paste.rs/example",
       copied: false
     }, true)).toBe("{\"title\":\"Notes\",\"provider\":\"paste.rs\",\"url\":\"https://paste.rs/example\",\"copied\":false}")
+  })
+
+  it("removes terminal control and bidi sequences from diagnostics", () => {
+    expect(sanitizeForTerminal("safe\u001b[31m\u202edanger")).toBe("safe�[31m�danger")
   })
 })

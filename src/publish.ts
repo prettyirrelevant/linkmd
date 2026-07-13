@@ -5,7 +5,7 @@ import { loadConfig, resolveToken } from "./config.js"
 import { UsageError } from "./errors.js"
 import { readDocument } from "./input.js"
 import { Invocation } from "./invocation.js"
-import { renderResult } from "./output.js"
+import { renderResult, sanitizeForTerminal } from "./output.js"
 import { publishGist } from "./providers/gist.js"
 import { publishHackMd } from "./providers/hackmd.js"
 import { publishPaste } from "./providers/paste-rs.js"
@@ -27,29 +27,40 @@ export const publish = Effect.fn("publish")(
     }
 
     const invocation = yield* Invocation
-    const config = yield* loadConfig
+    const needsConfig = provider !== "paste.rs" || (
+      !options.noCopy && !options.json && invocation.stderrIsTTY
+    )
+    const config = needsConfig ? yield* loadConfig : undefined
     const document = yield* readDocument(options)
     yield* Option.match(document.warning, {
       onNone: () => Effect.void,
-      onSome: (warning) => Console.warn(warning)
+      onSome: (warning) => Console.warn(sanitizeForTerminal(warning))
     })
 
-    const url = provider === "paste.rs"
-      ? yield* publishPaste(document)
-      : provider === "gist"
-        ? yield* publishGist(document, yield* resolveToken("gist", config))
-        : yield* publishHackMd(document, yield* resolveToken("hackmd", config))
-    const shouldCopy = options.copy || (!options.noCopy && (config.copy || invocation.stderrIsTTY))
-    const copied = shouldCopy ? yield* copyToClipboard(url) : false
-    const result = { title: document.title, provider, url, copied }
+    let url: string
+    if (provider === "paste.rs") {
+      url = yield* publishPaste(document)
+    } else {
+      const authConfig = config ?? (yield* loadConfig)
+      url = provider === "gist"
+        ? yield* publishGist(document, yield* resolveToken("gist", authConfig))
+        : yield* publishHackMd(document, yield* resolveToken("hackmd", authConfig))
+    }
+    const shouldCopy = options.copy || (
+      !options.noCopy && !options.json && invocation.stderrIsTTY && (config?.copy ?? true)
+    )
 
-    yield* Console.log(renderResult(result, options.json))
-    if (!options.json && invocation.stderrIsTTY) {
+    if (!options.json) yield* Console.log(url)
+    const copied = shouldCopy ? yield* copyToClipboard(url) : false
+    if (options.json) {
+      yield* Console.log(renderResult({ title: document.title, provider, url, copied }, true))
+    } else if (invocation.stderrIsTTY) {
+      const title = sanitizeForTerminal(document.title)
       yield* copied
-        ? Console.error(`Published "${document.title}" to ${provider}; copied link.`)
+        ? Console.error(`Published "${title}" to ${provider}; copied link.`)
         : shouldCopy
-          ? Console.error(`Published "${document.title}" to ${provider}; could not copy link.`)
-          : Console.error(`Published "${document.title}" to ${provider}.`)
+          ? Console.error(`Published "${title}" to ${provider}; could not copy link.`)
+          : Console.error(`Published "${title}" to ${provider}.`)
     }
   }
 )

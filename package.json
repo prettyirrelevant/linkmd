@@ -7,6 +7,7 @@
     "dev": "bun run src/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "check": "bun run typecheck && bun run test && bun run build",
     "build": "bun build src/main.ts --compile --minify --no-compile-autoload-dotenv --no-compile-autoload-bunfig --outfile dist/linkmd"
   },
   "dependencies": {

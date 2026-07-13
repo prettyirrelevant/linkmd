@@ -2,7 +2,7 @@ import { HttpClient, HttpClientRequest } from "@effect/platform"
 import { Effect } from "effect"
 
 import type { Document } from "../document.js"
-import { PublishError } from "../errors.js"
+import { isAmbiguousStatus, PublishError } from "../errors.js"
 
 const parseUrl = (value: string): Effect.Effect<string, PublishError> => {
   try {
@@ -23,7 +23,7 @@ const parseUrl = (value: string): Effect.Effect<string, PublishError> => {
 
 const publishPasteEffect = Effect.fn("publishPaste")(
   function* (document: Document) {
-    const client = yield* HttpClient.HttpClient
+    const client = (yield* HttpClient.HttpClient).pipe(HttpClient.withScope)
     const request = HttpClientRequest.post("https://paste.rs/").pipe(
       HttpClientRequest.bodyText(document.content, "text/plain; charset=utf-8")
     )
@@ -43,9 +43,12 @@ const publishPasteEffect = Effect.fn("publishPaste")(
       })
     }
     if (response.status !== 201) {
+      const outcomeUnknown = isAmbiguousStatus(response.status)
       return yield* new PublishError({
-        message: `paste.rs rejected the document with HTTP ${response.status}.`,
-        outcomeUnknown: false,
+        message: outcomeUnknown
+          ? `paste.rs returned HTTP ${response.status} after submission; the outcome is unknown. Do not retry blindly.`
+          : `paste.rs rejected the document with HTTP ${response.status}.`,
+        outcomeUnknown,
         status: response.status
       })
     }
@@ -63,6 +66,7 @@ const publishPasteEffect = Effect.fn("publishPaste")(
 
 export const publishPaste = (document: Document) =>
   publishPasteEffect(document).pipe(
+    Effect.scoped,
     Effect.timeoutFail({
       duration: "15 seconds",
       onTimeout: () => new PublishError({

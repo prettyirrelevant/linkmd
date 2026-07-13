@@ -2,7 +2,7 @@ import { HttpClient, HttpClientRequest, HttpClientResponse } from "@effect/platf
 import { Effect, Redacted, Schema } from "effect"
 
 import type { Document } from "../document.js"
-import { PublishError } from "../errors.js"
+import { isAmbiguousStatus, PublishError } from "../errors.js"
 
 const GistResponse = Schema.Struct({
   html_url: Schema.String
@@ -29,7 +29,7 @@ const publishGistEffect = Effect.fn("publishGist")(function* (
   document: Document,
   token: Redacted.Redacted<string>
 ) {
-  const client = yield* HttpClient.HttpClient
+  const client = (yield* HttpClient.HttpClient).pipe(HttpClient.withScope)
   const request = HttpClientRequest.post("https://api.github.com/gists").pipe(
     HttpClientRequest.acceptJson,
     HttpClientRequest.setHeader("X-GitHub-Api-Version", "2026-03-10"),
@@ -51,9 +51,12 @@ const publishGistEffect = Effect.fn("publishGist")(function* (
   )
 
   if (response.status !== 201) {
+    const outcomeUnknown = isAmbiguousStatus(response.status)
     return yield* new PublishError({
-      message: `GitHub rejected the gist with HTTP ${response.status}.`,
-      outcomeUnknown: false,
+      message: outcomeUnknown
+        ? `GitHub returned HTTP ${response.status} after submission; the outcome is unknown. Do not retry blindly.`
+        : `GitHub rejected the gist with HTTP ${response.status}.`,
+      outcomeUnknown,
       status: response.status
     })
   }
@@ -70,6 +73,7 @@ const publishGistEffect = Effect.fn("publishGist")(function* (
 
 export const publishGist = (document: Document, token: Redacted.Redacted<string>) =>
   publishGistEffect(document, token).pipe(
+    Effect.scoped,
     Effect.timeoutFail({
       duration: "15 seconds",
       onTimeout: () => new PublishError({

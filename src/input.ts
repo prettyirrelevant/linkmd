@@ -3,6 +3,7 @@ import { Effect, Option } from "effect"
 
 import {
   MAX_DOCUMENT_BYTES,
+  MAX_DOCUMENT_MEBIBYTES,
   type Document,
   findFirstHeading,
   normalizeContent,
@@ -25,7 +26,9 @@ const validate = (raw: string): Effect.Effect<string, InputError> => {
     return Effect.fail(new InputError({ message: "The input looks like a binary file, not Markdown." }))
   }
   if (new TextEncoder().encode(raw).byteLength > MAX_DOCUMENT_BYTES) {
-    return Effect.fail(new InputError({ message: "The Markdown input exceeds the 1 MiB limit." }))
+    return Effect.fail(new InputError({
+      message: `The Markdown input exceeds the ${MAX_DOCUMENT_MEBIBYTES} MiB safety limit.`
+    }))
   }
   return Effect.succeed(normalizeContent(raw))
 }
@@ -39,16 +42,32 @@ export const readDocument = (
     const invocation = yield* Invocation
     const source = Option.getOrUndefined(options.file)
 
+    if (source !== undefined && source !== "-" && source.startsWith("-")) {
+      return yield* new UsageError({
+        message: `Unknown option or ambiguous filename: ${source}. Prefix dash-leading files with ./`
+      })
+    }
+
     const raw = source === undefined || source === "-"
       ? invocation.stdinIsTTY
         ? yield* new UsageError({ message: "Markdown input required. Pass a file or pipe content to stdin." })
         : yield* invocation.readStdin
-      : yield* fs.readFileString(source).pipe(
-        Effect.mapError((cause) => new InputError({
-          message: `Could not read file: ${source}`,
-          cause
-        }))
-      )
+      : yield* Effect.gen(function* () {
+        const info = yield* fs.stat(source).pipe(
+          Effect.mapError((cause) => new InputError({ message: `Could not inspect file: ${source}`, cause }))
+        )
+        if (info.type !== "File") {
+          return yield* new InputError({ message: `Markdown input must be a regular file: ${source}` })
+        }
+        if (Number(info.size) > MAX_DOCUMENT_BYTES) {
+          return yield* new InputError({
+            message: `The Markdown input exceeds the ${MAX_DOCUMENT_MEBIBYTES} MiB safety limit.`
+          })
+        }
+        return yield* fs.readFileString(source).pipe(
+          Effect.mapError((cause) => new InputError({ message: `Could not read file: ${source}`, cause }))
+        )
+      })
 
     const content = yield* validate(raw)
     const sourceName = source === undefined || source === "-" ? undefined : path.basename(source)
