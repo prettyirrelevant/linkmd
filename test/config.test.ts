@@ -44,7 +44,7 @@ it.effect("prefers an environment token to a saved token", () =>
     Effect.map((token) => expect(Redacted.value(token)).toBe("environment"))
   ))
 
-it.scoped("writes config with restricted permissions", () =>
+it.scoped("writes config", () =>
   Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem
     const home = yield* fs.makeTempDirectoryScoped({ prefix: "linkmd-test-" })
@@ -56,7 +56,7 @@ it.scoped("writes config with restricted permissions", () =>
     const contents = yield* fs.readFileString(file)
     const info = yield* fs.stat(file)
     expect(contents).toContain("version = 1")
-    expect(info.mode & 0o777).toBe(0o600)
+    if (process.platform !== "win32") expect(info.mode & 0o777).toBe(0o600)
   }).pipe(
     Effect.provide(BunContext.layer)
   ))
