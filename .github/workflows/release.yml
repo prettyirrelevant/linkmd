@@ -98,7 +98,8 @@ jobs:
             extension: tar.gz
           - runner: windows-2025
             os: windows
-            target: bun-windows-x64-baseline
+            # Avoid Bun's separate target-runtime download for a native Windows build.
+            target: ""
             asset: windows-x64
             executable: linkmd.exe
             extension: zip
@@ -120,9 +121,13 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
         run: |
+          target_args=()
+          if [[ -n "$TARGET" ]]; then
+            target_args+=(--target="$TARGET")
+          fi
           bun build src/main.ts \
             --compile \
-            --target="$TARGET" \
+            "${target_args[@]}" \
             --minify \
             --no-compile-autoload-dotenv \
             --no-compile-autoload-bunfig \
