@@ -26,6 +26,8 @@ jobs:
             executable: linkmd
           - runner: windows-2025
             executable: linkmd.exe
+          - runner: windows-11-arm
+            executable: linkmd.exe
 
     steps:
       - name: Check out source

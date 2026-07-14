@@ -103,6 +103,12 @@ jobs:
             asset: windows-x64
             executable: linkmd.exe
             extension: zip
+          - runner: windows-11-arm
+            os: windows
+            target: ""
+            asset: windows-arm64
+            executable: linkmd.exe
+            extension: zip
 
     steps:
       - name: Check out source
@@ -185,7 +191,7 @@ jobs:
         run: |
           shopt -s nullglob
           assets=(linkmd-*.tar.gz linkmd-*.zip)
-          test "${#assets[@]}" -eq 5
+          test "${#assets[@]}" -eq 6
           LC_ALL=C sha256sum "${assets[@]}" > SHA256SUMS
           sha256sum --check SHA256SUMS
 
