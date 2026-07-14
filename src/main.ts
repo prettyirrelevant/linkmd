@@ -4,11 +4,10 @@ import type { Runtime } from "@effect/platform"
 import { BunContext, BunRuntime } from "@effect/platform-bun"
 import { Cause, Console, Effect, Exit, Layer, Option } from "effect"
 
+import packageJson from "../package.json" with { type: "json" }
 import { root } from "./cli.js"
 import { type AppError, ExitCodeError, exitCodeFor } from "./errors.js"
 import { Invocation } from "./invocation.js"
-
-const VERSION = "0.1.0"
 
 const FetchLive = FetchHttpClient.layer.pipe(
   Layer.provide(Layer.succeed(FetchHttpClient.RequestInit, { redirect: "manual" }))
@@ -20,7 +19,7 @@ const renderError = (error: AppError) => Console.error(error.message).pipe(
   Effect.andThen(new ExitCodeError({ code: exitCodeFor(error) }))
 )
 
-const command = Command.run(root, { name: "linkmd", version: VERSION })(process.argv)
+const command = Command.run(root, { name: "linkmd", version: packageJson.version })(process.argv)
 
 const program = command.pipe(
   Effect.catchTags({
