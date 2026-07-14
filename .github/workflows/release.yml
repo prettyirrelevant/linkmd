@@ -73,17 +73,35 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-24.04
+            os: linux
             target: bun-linux-x64-baseline
             asset: linux-x64
+            executable: linkmd
+            extension: tar.gz
           - runner: ubuntu-24.04-arm
+            os: linux
             target: bun-linux-arm64
             asset: linux-arm64
+            executable: linkmd
+            extension: tar.gz
           - runner: macos-26-intel
+            os: darwin
             target: bun-darwin-x64
             asset: darwin-x64
+            executable: linkmd
+            extension: tar.gz
           - runner: macos-26
+            os: darwin
             target: bun-darwin-arm64
             asset: darwin-arm64
+            executable: linkmd
+            extension: tar.gz
+          - runner: windows-2025
+            os: windows
+            target: bun-windows-x64-baseline
+            asset: windows-x64
+            executable: linkmd.exe
+            extension: zip
 
     steps:
       - name: Check out source
@@ -98,6 +116,7 @@ jobs:
         run: bun ci
 
       - name: Build executable
+        shell: bash
         env:
           TARGET: ${{ matrix.target }}
         run: |
@@ -110,19 +129,29 @@ jobs:
             --outfile dist/linkmd
 
       - name: Smoke test executable
-        run: ./dist/linkmd --help
+        run: ./dist/${{ matrix.executable }} --help
 
-      - name: Package executable
+      - name: Package executable for Unix
+        if: matrix.os != 'windows'
         env:
           ASSET: ${{ matrix.asset }}
           VERSION: ${{ needs.validate.outputs.version }}
         run: tar -czf "linkmd-$VERSION-$ASSET.tar.gz" -C dist linkmd
 
+      - name: Package executable for Windows
+        if: matrix.os == 'windows'
+        shell: pwsh
+        env:
+          ASSET: ${{ matrix.asset }}
+          EXECUTABLE: ${{ matrix.executable }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: Compress-Archive -Path "dist/$env:EXECUTABLE" -DestinationPath "linkmd-$env:VERSION-$env:ASSET.zip"
+
       - name: Upload executable
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-${{ matrix.asset }}
-          path: linkmd-${{ needs.validate.outputs.version }}-${{ matrix.asset }}.tar.gz
+          path: linkmd-${{ needs.validate.outputs.version }}-${{ matrix.asset }}.${{ matrix.extension }}
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
@@ -149,8 +178,9 @@ jobs:
       - name: Generate checksums
         working-directory: release
         run: |
-          assets=(linkmd-*.tar.gz)
-          test "${#assets[@]}" -eq 4
+          shopt -s nullglob
+          assets=(linkmd-*.tar.gz linkmd-*.zip)
+          test "${#assets[@]}" -eq 5
           LC_ALL=C sha256sum "${assets[@]}" > SHA256SUMS
           sha256sum --check SHA256SUMS
 
@@ -167,6 +197,7 @@ jobs:
         run: |
           gh release create "$TAG" \
             release/linkmd-*.tar.gz \
+            release/linkmd-*.zip \
             release/SHA256SUMS \
             --verify-tag \
             --generate-notes

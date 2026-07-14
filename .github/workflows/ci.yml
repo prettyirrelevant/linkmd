@@ -15,8 +15,17 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    name: Check ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            executable: linkmd
+          - runner: windows-2025
+            executable: linkmd.exe
 
     steps:
       - name: Check out source
@@ -40,4 +49,4 @@ jobs:
         run: bun run build
 
       - name: Smoke test executable
-        run: ./dist/linkmd --help
+        run: ./dist/${{ matrix.executable }} --help
