@@ -15,6 +15,8 @@ Or download the archive for your platform from [GitHub Releases](https://github.
 - `linkmd hackmd [file]` publishes a guest-readable HackMD note.
 - `linkmd gist [file]` publishes a secret GitHub Gist.
 - `linkmd paste [file]` publishes an anonymous paste to paste.rs.
+- `linkmd mdshareonline [file]` publishes an anonymous share to mdshare.online.
+- `linkmd mdsharelive [file]` publishes to mdshare.live and returns a view-only link.
 - `linkmd init` configures provider credentials.
 
 Pass a file, use `-` for stdin, or omit the file when stdin is piped. Options must precede the file.
@@ -23,6 +25,8 @@ Pass a file, use `-` for stdin, or omit the file when stdin is piped. Options mu
 linkmd hackmd notes.md
 linkmd gist notes.md
 linkmd paste notes.md
+linkmd mdshareonline notes.md
+linkmd mdsharelive notes.md
 pbpaste | linkmd paste --no-copy
 linkmd paste --json notes.md
 ```
@@ -38,7 +42,7 @@ linkmd paste --json notes.md
 > Success prints the URL to stdout. Interactive runs copy it by default; JSON mode only copies with `--copy`. Clipboard failure is non-fatal. Documents over 10 MiB are rejected locally.
 
 > [!WARNING]
-> Published links are not private. Anyone with the URL may be able to read them, and paste.rs does not document retention guarantees.
+> Published links are not private. Anyone with the URL may be able to read them. paste.rs does not document retention guarantees. mdshare.online deletes shares after 30 days. mdshare.live deletes documents after 90 days; the `mdsharelive` link grants view-only access and never carries the admin key.
 
 ## Configuration
 

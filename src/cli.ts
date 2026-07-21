@@ -30,7 +30,7 @@ const json = Options.boolean("json").pipe(
 )
 
 const makePublishCommand = (
-  name: "gist" | "hackmd" | "paste",
+  name: "gist" | "hackmd" | "paste" | "mdshareonline" | "mdsharelive",
   provider: ProviderName,
   description: string
 ) => Command.make(
@@ -40,6 +40,16 @@ const makePublishCommand = (
 ).pipe(Command.withDescription(description))
 
 const paste = makePublishCommand("paste", ProviderName.PasteRs, "Publish Markdown to paste.rs")
+const mdshareonline = makePublishCommand(
+  "mdshareonline",
+  ProviderName.MdShareOnline,
+  "Publish Markdown to mdshare.online"
+)
+const mdsharelive = makePublishCommand(
+  "mdsharelive",
+  ProviderName.MdShareLive,
+  "Publish Markdown to mdshare.live with a view-only link"
+)
 const gist = makePublishCommand("gist", ProviderName.Gist, "Publish Markdown as a secret GitHub Gist")
 const hackmd = makePublishCommand(
   "hackmd",
@@ -51,8 +61,10 @@ const init = Command.make("init", {}, () => initialize()).pipe(
 )
 
 export const root = Command.make("linkmd", {}, () =>
-  Console.log("Usage: linkmd <gist|hackmd|paste> [options] [file]\n       linkmd init")
+  Console.log(
+    "Usage: linkmd <gist|hackmd|paste|mdshareonline|mdsharelive> [options] [file]\n       linkmd init"
+  )
 ).pipe(
   Command.withDescription("Publish Markdown and print a shareable URL"),
-  Command.withSubcommands([gist, hackmd, paste, init])
+  Command.withSubcommands([gist, hackmd, paste, mdshareonline, mdsharelive, init])
 )

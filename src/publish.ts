@@ -9,6 +9,8 @@ import { renderResult, sanitizeForTerminal } from "./output.js"
 import { ProviderName, providerLabel } from "./provider.js"
 import { publishGist } from "./providers/gist.js"
 import { publishHackMd } from "./providers/hackmd.js"
+import { publishMdShareLive } from "./providers/mdshare-live.js"
+import { publishMdShareOnline } from "./providers/mdshare.js"
 import { publishPaste } from "./providers/paste-rs.js"
 
 export interface PublishOptions {
@@ -26,7 +28,10 @@ export const publish = Effect.fn("publish")(
     }
 
     const invocation = yield* Invocation
-    const needsConfig = provider !== ProviderName.PasteRs || (
+    const anonymous = provider === ProviderName.PasteRs ||
+      provider === ProviderName.MdShareOnline ||
+      provider === ProviderName.MdShareLive
+    const needsConfig = !anonymous || (
       !options.noCopy && !options.json && invocation.stderrIsTTY
     )
     const config = needsConfig ? yield* loadConfig : undefined
@@ -39,6 +44,10 @@ export const publish = Effect.fn("publish")(
     let url: string
     if (provider === ProviderName.PasteRs) {
       url = yield* publishPaste(document)
+    } else if (provider === ProviderName.MdShareOnline) {
+      url = yield* publishMdShareOnline(document)
+    } else if (provider === ProviderName.MdShareLive) {
+      url = yield* publishMdShareLive(document)
     } else {
       const authConfig = config ?? (yield* loadConfig)
       url = provider === ProviderName.Gist
