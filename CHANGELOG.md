@@ -9,6 +9,8 @@ Commit hashes link to [the repository](https://github.com/prettyirrelevant/linkm
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-21
+
 ### Added
 
 - `mdshareonline` command publishes an anonymous share to mdshare.online.
@@ -60,7 +62,8 @@ Commit hashes link to [the repository](https://github.com/prettyirrelevant/linkm
 - [`ffc1be3`](https://github.com/prettyirrelevant/linkmd/commit/ffc1be3) fix: identify repository when publishing releases
 - [`66c9256`](https://github.com/prettyirrelevant/linkmd/commit/66c9256) fix: harden CLI and provider boundaries
 
-[Unreleased]: https://github.com/prettyirrelevant/linkmd/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/prettyirrelevant/linkmd/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/prettyirrelevant/linkmd/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/prettyirrelevant/linkmd/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/prettyirrelevant/linkmd/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/prettyirrelevant/linkmd/releases/tag/v0.1.0
